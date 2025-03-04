@@ -5,8 +5,9 @@ const Navdata = () => {
   const history = useNavigate()
 
   // Admin
-  const [isUsers, setIsUsers] = useState(false)
   const [isMap, setIsMap] = useState(false)
+  const [isUsers, setIsUsers] = useState(false)
+  const [isShip, setIsShip] = useState(false)
 
   //state data
   const [iscurrentState, setIscurrentState] = useState("Users")
@@ -36,10 +37,23 @@ const Navdata = () => {
       label: "Admin",
       isHeader: true
     },
+    
+    {
+      id: "map",
+      label: "Bản đồ tàu thuyền",
+      icon: "mdi mdi-map-search",
+      link: "/map",
+      stateVariables: isMap,
+      click: function (e) {
+        e.preventDefault()
+        setIsMap(!isMap)
+        setIscurrentState("Map")
+      }
+    },
     {
       id: "users",
       label: "Quản lý người dùng",
-      icon: "mdi mdi-speedometer",
+      icon: "mdi mdi-account-group",
       link: "/users",
       stateVariables: isUsers,
       click: function (e) {
@@ -50,14 +64,14 @@ const Navdata = () => {
     },
     {
       id: "map",
-      label: "Bản đồ tàu thuyền",
-      icon: "mdi mdi-map-search",
-      link: "/map",
+      label: "Quản lý tàu thuyền",
+      icon: "mdi mdi-ferry",
+      link: "/ship",
       stateVariables: isMap,
       click: function (e) {
         e.preventDefault()
-        setIsUsers(!isMap)
-        setIscurrentState("Map")
+        setIsShip(!isMap)
+        setIscurrentState("Ship")
       }
     }
   ]

@@ -11,7 +11,6 @@ createRoot(document.getElementById("root")).render(
   <BrowserRouter>
     <AuthProvider>
       <App />
-      <div id="mapInfo" />
       <ToastContainer
         position="top-right"
         autoClose={2000}

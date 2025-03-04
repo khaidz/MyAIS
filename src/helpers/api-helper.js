@@ -42,6 +42,16 @@ instance.interceptors.response.use(
       !originalRequest._retry
     ) {
       originalRequest._retry = true
+      originalRequest._retryCount = originalRequest._retryCount || 0
+
+      if (originalRequest._retryCount >= 3) {
+        deleteAccessToken()
+        deleteRefreshToken()
+        return Promise.reject(error)
+      }
+
+      originalRequest._retryCount += 1
+
       try {
         const refreshToken = getRefreshToken()
         if (refreshToken && isTokenValid(refreshToken)) {

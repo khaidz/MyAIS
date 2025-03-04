@@ -9,9 +9,7 @@ import logoLight from '../assets/images/logo-light.png';
 
 //import Components
 import SearchOption from '../components/SearchOption';
-import MyCartDropdown from '../components/MyCartDropdown';
 import FullScreenDropdown from '../components/FullScreenDropdown';
-import NotificationDropdown from '../components/NotificationDropdown';
 import ProfileDropdown from '../components/ProfileDropdown';
 import LightDark from '../components/LightDark';
 import useLayoutStore from '../store/useLayoutStore';

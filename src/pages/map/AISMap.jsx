@@ -2,6 +2,7 @@ import Feature from "ol/Feature"
 import Map from "ol/Map"
 import Overlay from "ol/Overlay"
 import View from "ol/View"
+import { GeoJSON } from "ol/format"
 import Point from "ol/geom/Point"
 import TileLayer from "ol/layer/Tile"
 import VectorLayer from "ol/layer/Vector"
@@ -9,26 +10,65 @@ import "ol/ol.css"
 import { fromLonLat } from "ol/proj"
 import OSM from "ol/source/OSM"
 import VectorSource from "ol/source/Vector"
-import { Circle as CircleStyle, Fill, Stroke, Style, Text } from "ol/style"
-import React, { useEffect, useRef } from "react"
-import { Container } from "reactstrap"
-import BreadCrumb from "../../components/BreadCrumb"
+import { Fill, Icon, Stroke, Style, Text } from "ol/style"
+import React, { useEffect, useRef, useState } from "react"
+import { Button, Container } from "reactstrap"
 import hoangSa from "./data/HoangSa.json"
-import truongSa from "./data/TruongSa.json"
 import offshore from "./data/Offshore.json"
-import { GeoJSON } from "ol/format"
 import vtTau1 from "./data/Tau1.json"
 import vtTau2 from "./data/Tau2.json"
 import vtTau3 from "./data/Tau3.json"
+import truongSa from "./data/TruongSa.json"
 
 const AISMap = () => {
   document.title = "Bản đồ tàu thuyền"
 
   const mapRef = useRef()
   const overlayRef = useRef()
+  const [selectedVessel, setSelectedVessel] = useState(null)
+  const [vesselPoints, setVesselPoints] = useState([])
+
+  const vectorSource = new VectorSource()
+
+  const vessels = [
+    { name: "Tàu 1", color: "red", points: vtTau1 },
+    { name: "Tàu 2", color: "blue", points: vtTau2 },
+    { name: "Tàu 3", color: "yellow", points: vtTau3 }
+  ]
+
+  const renderVessels = (vesselList) => {
+    vectorSource.clear()
+    vesselList.forEach((vessel) => {
+      vessel.points.forEach((point, index) => {
+        if (index < vessel.points.length - 1) {
+          const currentPoint = point
+          const nextPoint = vessel.points[index + 1]
+          const angleInRadians = Math.atan2(
+            nextPoint.latitude - currentPoint.latitude,
+            nextPoint.longitude - currentPoint.longitude
+          )
+
+          const feature = new Feature({
+            geometry: new Point(fromLonLat([currentPoint.longitude, currentPoint.latitude])),
+            name: vessel.name
+          })
+
+          const iconStyle = new Style({
+            image: new Icon({
+              src: `src/assets/images/arrow/${vessel.color}.png`,
+              scale: 0.3,
+              rotation: angleInRadians
+            })
+          })
+
+          feature.setStyle(iconStyle)
+          vectorSource.addFeature(feature)
+        }
+      })
+    })
+  }
 
   useEffect(() => {
-    const vectorSource = new VectorSource()
     const map = new Map({
       target: mapRef.current,
       layers: [
@@ -53,37 +93,37 @@ const AISMap = () => {
     map.addOverlay(infoOverlay)
     overlayRef.current = infoOverlay
 
-    // Định nghĩa 3 tàu với tọa độ, màu sắc và lịch trình di chuyển
-    const vessels = [
-      { name: "Tàu 1", color: "red", points: vtTau1 },
-      { name: "Tàu 2", color: "blue", points: vtTau2 },
-      { name: "Tàu 3", color: "yellow", points: vtTau3 }
-    ]
-
-    // Tạo các điểm cho mỗi tàu
-    vessels.forEach((vessel) => {
-      vessel.points.forEach((point) => {
-        const feature = new Feature({
-          geometry: new Point(fromLonLat([point.longitude, point.latitude])),
-          name: vessel.name
-        })
-
-        feature.setStyle(
-          new Style({
-            image: new CircleStyle({
-              radius: 3,
-              fill: new Fill({ color: vessel.color }),
-              stroke: new Stroke({ color: "black", width: 0.3 })
-            })
-          })
-        )
-
+    const addFeaturesWithStyle = (features, style) => {
+      features.forEach((feature) => {
+        feature.setStyle(style)
         vectorSource.addFeature(feature)
       })
-    })
+    }
 
-    // Đánh dấu Hoàng Sa, Trường Sa
-    //// Thiết lập kiểu cho polygon
+    const addTextFeature = (coordinates, text) => {
+      const textFeature = new Feature({
+        geometry: new Point(fromLonLat(coordinates)),
+        name: text
+      })
+
+      const textStyle = new Style({
+        text: new Text({
+          text: text,
+          font: "bold 12px Arial",
+          fill: new Fill({ color: "black" }),
+          stroke: new Stroke({
+            color: "white",
+            width: 2
+          })
+        })
+      })
+
+      textFeature.setStyle(textStyle)
+      vectorSource.addFeature(textFeature)
+    }
+
+    renderVessels(vessels)
+
     const polygonStyle = new Style({
       fill: new Fill({
         color: "rgba(87, 207, 243, 0.6)"
@@ -95,99 +135,62 @@ const AISMap = () => {
     })
 
     const geojsonFormat = new GeoJSON()
-    const featuresHoangSa = geojsonFormat.readFeatures(hoangSa, {
-      featureProjection: "EPSG:3857"
-    })
-    vectorSource.addFeatures(featuresHoangSa)
 
-    // Áp dụng kiểu cho các feature
-    featuresHoangSa.forEach((feature) => {
-      feature.setStyle(polygonStyle)
-    })
-
-    const featuresTruongSa = geojsonFormat.readFeatures(truongSa, {
-      featureProjection: "EPSG:3857"
-    })
-    vectorSource.addFeatures(featuresTruongSa)
-
-    // Áp dụng kiểu cho các feature
-    featuresTruongSa.forEach((feature) => {
-      feature.setStyle(polygonStyle)
-    })
-
-    // Thêm text cho Hoàng Sa
-    const textFeatureHoangSa = new Feature({
-      geometry: new Point(fromLonLat([111.67182892626687, 16.740999328151645])), // Tọa độ trung tâm Hoàng Sa
-      name: "QĐ. Hoàng Sa"
-    })
-
-    const textStyle = new Style({
-      text: new Text({
-        text: "QĐ. Hoàng Sa",
-        font: "bold 12px Arial",
-        fill: new Fill({ color: "black" }),
-        stroke: new Stroke({
-          color: "white",
-          width: 2
-        })
+    const renderHoangSa = () => {
+      const featuresHoangSa = geojsonFormat.readFeatures(hoangSa, {
+        featureProjection: "EPSG:3857"
       })
-    })
+      addFeaturesWithStyle(featuresHoangSa, polygonStyle)
+      addTextFeature([111.67182892626687, 16.740999328151645], "QĐ. Hoàng Sa")
+    }
 
-    textFeatureHoangSa.setStyle(textStyle)
-    vectorSource.addFeature(textFeatureHoangSa)
-
-    // Thêm text cho Trường Sa
-    const textFeatureTruongSa = new Feature({
-      geometry: new Point(fromLonLat([113.81219385959923, 9.347000006457279])), // Tọa độ trung tâm Hoàng Sa
-      name: "QĐ. Hoàng Sa"
-    })
-
-    const textStyle2 = new Style({
-      text: new Text({
-        text: "QĐ. Trường Sa",
-        font: "bold 12px Arial",
-        fill: new Fill({ color: "black" }),
-        stroke: new Stroke({
-          color: "white",
-          width: 2
-        })
+    const renderTruongSa = () => {
+      const featuresTruongSa = geojsonFormat.readFeatures(truongSa, {
+        featureProjection: "EPSG:3857"
       })
-    })
+      addFeaturesWithStyle(featuresTruongSa, polygonStyle)
+      addTextFeature([113.81219385959923, 9.347000006457279], "QĐ. Trường Sa")
+    }
 
-    textFeatureTruongSa.setStyle(textStyle2)
-    vectorSource.addFeature(textFeatureTruongSa)
+    renderHoangSa()
+    renderTruongSa()
 
-    // Thêm dữ liệu GeoJSON cho đường đi vào bản đồ
     const featuresOffshore = geojsonFormat.readFeatures(offshore, {
       featureProjection: "EPSG:3857"
     })
-    vectorSource.addFeatures(featuresOffshore)
 
-    // Thiết lập kiểu cho đường đi
     const lineStyle = new Style({
       stroke: new Stroke({
-        color: "rgba(31, 124, 247, 0.7)", // Màu đường
-        width: 2 // Độ dày của đường
+        color: "rgba(31, 124, 247, 0.7)",
+        width: 2
       })
     })
 
-    // Áp dụng kiểu cho từng feature của đường đi
-    featuresOffshore.forEach((feature) => {
-      feature.setStyle(lineStyle)
-    })
+    addFeaturesWithStyle(featuresOffshore, lineStyle)
 
-    // Thêm sự kiện hover cho overlay
     map.on("pointermove", (event) => {
       const feature = map.forEachFeatureAtPixel(event.pixel, (feat) => feat)
-      if (feature) {
+      const mapInfoElement = document.getElementById("mapInfo")
+
+      if (feature && mapInfoElement) {
         const coordinates = feature.getGeometry().getCoordinates()
         overlayRef.current.setPosition(coordinates)
-        document.getElementById("mapInfo").innerHTML =
-          `<div><div class="fw-bold">${feature.get("name")}</div><div>Destination: <b>Hải Phòng</b></div><div>Position received: <b>1 hour ago</b></div></div>`
-        document.getElementById("mapInfo").style.display = "block"
-      } else {
+        mapInfoElement.innerHTML = `<div><div class="fw-bold">${feature.get("name")}</div><div>Destination: <b>Hải Phòng</b></div><div>Position received: <b>1 hour ago</b></div></div>`
+        mapInfoElement.style.display = "block"
+      } else if (mapInfoElement) {
         overlayRef.current.setPosition(undefined)
-        document.getElementById("mapInfo").style.display = "none"
+        mapInfoElement.style.display = "none"
+      }
+    })
+
+    map.on("click", (event) => {
+      const feature = map.forEachFeatureAtPixel(event.pixel, (feat) => feat)
+      if (feature) {
+        const vesselName = feature.get("name")
+        const selectedVessel = vessels.find((v) => v.name === vesselName)
+        setSelectedVessel(selectedVessel)
+        setVesselPoints(selectedVessel.points)
+        renderVessels([selectedVessel])
       }
     })
 
@@ -197,12 +200,32 @@ const AISMap = () => {
     }
   }, [])
 
+  const handleCloseSidebar = () => {
+    setSelectedVessel(null)
+    setVesselPoints([])
+    renderVessels(vessels)
+  }
+
   return (
     <React.Fragment>
       <div className="page-content">
+        <div id="mapInfo" />
         <Container fluid>
           <div ref={mapRef} style={{ width: "100%", height: "82vh" }} />
         </Container>
+        {selectedVessel && (
+          <div className="right-sidebar">
+            <Button onClick={handleCloseSidebar}>Close</Button>
+            <h4>{selectedVessel.name}</h4>
+            <ul>
+              {vesselPoints.map((point, index) => (
+                <li key={index}>
+                  Lat: {point.latitude}, Lon: {point.longitude}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </React.Fragment>
   )

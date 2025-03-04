@@ -1,13 +1,13 @@
-import React from 'react';
-import AppRoutes from './routes/AppRoutes';
-import { loadAnimation } from "lottie-web";
-import { defineElement } from "lord-icon-element";
+import { defineElement } from "lord-icon-element"
+import { loadAnimation } from "lottie-web"
+import React from "react"
+import AppRoutes from "./routes/AppRoutes"
 
 // register lottie and define custom element
-defineElement(loadAnimation);
+defineElement(loadAnimation)
 
 function App(props) {
-  return <AppRoutes />;
+  return <AppRoutes />
 }
 
-export default App;
+export default App

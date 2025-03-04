@@ -8,9 +8,9 @@ import Login from "../pages/authentication/Login"
 import Register from "../pages/authentication/Register"
 import Alt404 from "../pages/error/Alt404"
 import Home from "../pages/home/Home"
-import Profile from "../pages/profile/Profile"
-import UserList from "../pages/user/UserList"
 import AISMap from "../pages/map/AISMap"
+import Profile from "../pages/profile/Profile"
+import Ship from "../pages/ship/Ship"
 
 const publicRoutes = [
   { path: "/auth/login", component: <Login /> },
@@ -19,9 +19,9 @@ const publicRoutes = [
 ]
 const privateRoutes = [
   { path: "/", exact: true, component: <Home /> },
-  { path: "/users", component: <UserList /> },
   { path: "/profile", component: <Profile /> },
-  { path: "/map", component: <AISMap /> }
+  { path: "/map", component: <AISMap /> },
+  { path: "/ship", component: <Ship /> }
 ]
 
 const errorRoutes = [{ path: "*", component: <Alt404 /> }]
