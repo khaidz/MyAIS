@@ -1,4 +1,5 @@
 import { useReactTable, getCoreRowModel, flexRender } from "@tanstack/react-table"
+import React from "react"
 import Flatpickr from "react-flatpickr"
 import Select from "react-select"
 import { Input, Spinner, Table } from "reactstrap"
@@ -42,33 +43,16 @@ const TableCommon = ({
 
   const renderSearchInput = (header) => {
     if (header.column.columnDef.meta?.allowSearch) {
-      if (header.column.columnDef.meta?.searchType === "select") {
-        return (
-          <Select
-            value={""}
-            onChange={(selectedSingle) => {
-              // handleSelectSingle(selectedSingle)
-            }}
-            options={[]}
-          />
-        )
-      } else if (header.column.columnDef.meta?.searchType === "date") {
-        return (
-          <Flatpickr
-            className="form-control"
-            options={{
-              dateFormat: "d/m/Y"
-            }}
-            placeholder=""
-          />
-        )
+      const searchType = header.column.columnDef.meta?.searchType
+      if (searchType === "select") {
+        return <Select value={""} onChange={() => {}} options={[]} />
+      } else if (searchType === "date") {
+        return <Flatpickr className="form-control" options={{ dateFormat: "d/m/Y" }} placeholder="" />
       }
       return (
         <Input
           value={searchValues[header.id] || ""}
-          onChange={(e) => {
-            handleSearchChange(header.id, e.target.value)
-          }}
+          onChange={(e) => handleSearchChange(header.id, e.target.value)}
         />
       )
     }
@@ -84,58 +68,45 @@ const TableCommon = ({
       <Table hover className="table-nowrap">
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id} className="table-active">
-              {showCheckbox && (
-                <th className="th-checkbox">
-                  <Input
-                    type="checkbox"
-                    checked={selectedRows.length === data.length}
-                    onChange={() => {
-                      const allRowIds = data.map((item) => item.id)
-                      if (setSelectedRows) {
+            <React.Fragment key={headerGroup.id}>
+              <tr className="table-active">
+                {showCheckbox && (
+                  <th className="th-checkbox">
+                    <Input
+                      type="checkbox"
+                      checked={selectedRows.length === data.length}
+                      onChange={() => {
+                        const allRowIds = data.map((item) => item.id)
                         setSelectedRows(selectedRows.length === data.length ? [] : allRowIds)
-                      }
-                    }}
-                  />
-                </th>
-              )}
-              {headerGroup.headers.map((header) => (
-                <th
-                  key={header.id}
-                  colSpan={header.colSpan}
-                  style={{
-                    width: `${header.getSize()}%`
-                    // maxWidth: header.getSize()
-                  }}
-                  className="table-th"
-                  onClick={() => handleSort(header.id)}
-                >
-                  <span className="pe-2">
-                    {header.isPlaceholder ? null : (
-                      <>{flexRender(header.column.columnDef.header, header.getContext())}</>
-                    )}
-                  </span>
-                </th>
-              ))}
-            </tr>
-          ))}
-          {showSearch &&
-            table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id} className="table-active">
-                {showCheckbox && <th></th>}
+                      }}
+                    />
+                  </th>
+                )}
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
                     colSpan={header.colSpan}
-                    style={{
-                      width: `${header.getSize()}%`
-                    }}
+                    style={{ width: `${header.getSize()}%` }}
+                    className="table-th"
                   >
-                    {renderSearchInput(header)}
+                    <span className="pe-2">
+                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                    </span>
                   </th>
                 ))}
               </tr>
-            ))}
+              {showSearch && (
+                <tr className="table-active">
+                  {showCheckbox && <th></th>}
+                  {headerGroup.headers.map((header) => (
+                    <th key={header.id} colSpan={header.colSpan} style={{ width: `${header.getSize()}%` }}>
+                      {renderSearchInput(header)}
+                    </th>
+                  ))}
+                </tr>
+              )}
+            </React.Fragment>
+          ))}
         </thead>
         <tbody>
           {table.getRowModel().rows.map((row) => {
@@ -146,25 +117,15 @@ const TableCommon = ({
                     <Input
                       type="checkbox"
                       checked={selectedRows.indexOf(row.original.id) >= 0}
-                      onChange={() => {
-                        handleCheckboxChange(row.original.id)
-                      }}
+                      onChange={() => handleCheckboxChange(row.original.id)}
                     />
                   </td>
                 )}
-                {row.getVisibleCells().map((cell) => {
-                  return (
-                    <td
-                      key={cell.id}
-                      style={{
-                        width: `${cell.column.getSize()}%`
-                      }}
-                      className="table-td"
-                    >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  )
-                })}
+                {row.getVisibleCells().map((cell) => (
+                  <td key={cell.id} style={{ width: `${cell.column.getSize()}%` }} className="table-td">
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
               </tr>
             )
           })}

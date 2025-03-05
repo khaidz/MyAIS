@@ -11,6 +11,7 @@ import Home from "../pages/home/Home"
 import AISMap from "../pages/map/AISMap"
 import Profile from "../pages/profile/Profile"
 import Ship from "../pages/ship/Ship"
+import Users from "../pages/users/Users"
 
 const publicRoutes = [
   { path: "/auth/login", component: <Login /> },
@@ -21,7 +22,8 @@ const privateRoutes = [
   { path: "/", exact: true, component: <Home /> },
   { path: "/profile", component: <Profile /> },
   { path: "/map", component: <AISMap /> },
-  { path: "/ship", component: <Ship /> }
+  { path: "/ship", component: <Ship /> },
+  { path: "/users", component: <Users /> }
 ]
 
 const errorRoutes = [{ path: "*", component: <Alt404 /> }]
