@@ -67,16 +67,41 @@ td {
   cursor: pointer;
 }
 
-#mapInfo{
+
+.info-panel {
   position: absolute;
-  background: white;
-  padding: 5px;
-  border: 1px solid black;
-  border-radius: 5px;
-  display: none;
-  transform: translate(-50%, -100%);
-  width: auto;
-  min-width: 250px;
-  max-width: 400px;
-  z-index: 1000
+  right: -18%;
+  top: 0;
+  width: 24%;
+  height: 100%;
+  padding: 15px;
+  background-color: #fff;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+  transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 2;
+  overflow-y: auto;
+}
+
+.info-panel h4 {
+  color: #007bff;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #007bff;
+}
+
+.control-button {
+  position: absolute;
+  top: 50%;
+  background: "#007bff";
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

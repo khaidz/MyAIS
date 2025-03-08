@@ -105,7 +105,6 @@ const Header = ({ onChangeLayoutMode, layoutModeType, headerClass }) => {
                 </span>
               </button>
 
-              <SearchOption />
             </div>
 
             <div className="d-flex align-items-center">
