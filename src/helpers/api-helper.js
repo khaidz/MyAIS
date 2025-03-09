@@ -79,7 +79,7 @@ instance.interceptors.response.use(
 // Success handler
 const successHandle = (response) => {
   if (response.status === 200 || response.status === 201) {
-    if (response.headers["content-type"] !== "application/json") {
+    if (!response.headers["content-type"]?.includes("application/json")) {
       return response
     }
     return response.data
