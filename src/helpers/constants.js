@@ -20,3 +20,11 @@ export const vesselTypes = [
   {type: "8", name: 'NavigationAids'},
   {type: "9", name: 'UnspecifiedShips'},
 ]
+
+export const searchTypesLOV = [
+  { value: "All", label: "Tất cả" },
+  { value: "VesselName", label: "VesselName" },
+  { value: "MMSI", label: "MMSI" },
+  { value: "IMONumber", label: "IMONumber" }
+]
+

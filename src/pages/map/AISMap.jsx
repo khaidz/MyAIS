@@ -13,9 +13,9 @@ import OSM from "ol/source/OSM"
 import VectorSource from "ol/source/Vector"
 import { Fill, Icon, Stroke, Style } from "ol/style"
 import React, { useEffect, useRef, useState, useCallback, useMemo, memo } from "react"
-import { Button, Card, CardBody, Col, Container, ListGroup, ListGroupItem, Row, Spinner } from "reactstrap"
+import { Button, Card, CardBody, Col, Container, Input, ListGroup, ListGroupItem, Row, Spinner } from "reactstrap"
 import { toast } from "react-toastify"
-import { vesselTypes } from "../../helpers/constants"
+import { searchTypesLOV, vesselTypes } from "../../helpers/constants"
 import { vesselService } from "../../services/vessel-service"
 
 // Import map data
@@ -23,6 +23,7 @@ import hoangSa from "./data/HoangSa.json"
 import offshore from "./data/Offshore.json"
 import truongSa from "./data/TruongSa.json"
 import Select from "react-select"
+import SearchOption from "../../components/SearchOption"
 // Constants
 const INITIAL_CENTER = [107.5698, 16.4637]
 const INITIAL_ZOOM = 6
@@ -165,6 +166,10 @@ const AISMap = () => {
   const [selectedVessel, setSelectedVessel] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
 
+  const [searchValue, setSearchValue] = useState("")
+  const [searchType, setSearchType] = useState("VesselName")
+  const [showSearchResult, setShowSearchResult] = useState(false)
+
   const vectorSource = useMemo(() => new VectorSource(), [])
 
   const renderVessels = useCallback(
@@ -193,17 +198,20 @@ const AISMap = () => {
     [vectorSource]
   )
 
-  const getVesselList = useCallback(async () => {
-    try {
-      const response = await vesselService.getVesselList({})
-      const vessels = response?.DM_Tau?.$values || []
-      setVesselList(vessels)
-      renderVessels(vessels)
-    } catch (error) {
-      console.error("Error fetching vessel list:", error)
-      toast.error("Có lỗi xảy ra khi tải danh sách tàu")
-    }
-  }, [renderVessels])
+  const getVesselList = useCallback(
+    async (thamSoObject = {}) => {
+      try {
+        const response = await vesselService.getVesselList(thamSoObject)
+        const vessels = response?.DM_Tau?.$values || []
+        setVesselList(vessels)
+        renderVessels(vessels)
+      } catch (error) {
+        console.error("Error fetching vessel list:", error)
+        toast.error("Có lỗi xảy ra khi tải danh sách tàu")
+      }
+    },
+    [renderVessels]
+  )
 
   const getVesselRoute = async (MMSI) => {
     if (!MMSI) return
@@ -269,6 +277,17 @@ const AISMap = () => {
     }
   }, [vectorSource])
 
+  const handleSearch = () => {
+    setShowSearchResult(true)
+    if (!searchValue || !searchType) {
+      getVesselList({})
+    } else {
+      getVesselList({
+        [searchType]: searchValue
+      })
+    }
+  }
+
   return (
     <React.Fragment>
       <div className="page-content">
@@ -285,7 +304,67 @@ const AISMap = () => {
                   left: 0,
                   zIndex: 1
                 }}
-              />
+              >
+                <Row
+                  className="position-absolute z-1 w-50"
+                  style={{
+                    top: "10px",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    backgroundColor: "#000a",
+                    borderRadius: "10px",
+                    padding: "10px 5px"
+                  }}
+                >
+                  <Col md={12} lg={3}>
+                    <Select
+                      options={searchTypesLOV}
+                      value={searchTypesLOV.find((type) => type.value === searchType)}
+                      onChange={(e) => setSearchType(e.value)}
+                    />
+                  </Col>
+                  <Col md={12} lg={9} className="d-flex align-items-center gap-2">
+                    <Input
+                      placeholder="Nhập từ khoá tìm kiếm"
+                      value={searchValue}
+                      onChange={(e) => setSearchValue(e.target.value)}
+                    />
+                    <Button color="danger" style={{ width: "150px" }} onClick={handleSearch}>
+                      Tìm kiếm
+                    </Button>
+                  </Col>
+                  {showSearchResult && (
+                    <Col>
+                      <div className="text-white mt-3 d-flex align-items-center justify-content-between">
+                        <span>Kết quả tìm kiếm</span>
+                        <span onClick={() => setShowSearchResult(false)} className="fs-20 cursor-pointer">
+                          <i className="ri-close-circle-line"></i>
+                        </span>
+                      </div>
+                      <div className="mt-2">
+                        {vesselList.map((vessel, index) => (
+                          <div className="py-2 text-white" key={index}>
+                            <span onClick={() => {
+                              setSelectedVessel(vessel);
+                              setIsPanelOpen(true);
+                            }} className="cursor-pointer">
+                              <i className="ri-radio-button-line"></i> {vessel.VesselName}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </Col>
+                  )}
+                </Row>
+                <div
+                  className="position-absolute z-1 d-flex align-items-center gap-2 w-50"
+                  style={{
+                    left: "50%",
+                    top: 10,
+                    transform: "translateX(-50%)"
+                  }}
+                ></div>
+              </div>
               <InfoPanel
                 isPanelOpen={isPanelOpen}
                 selectedVessel={selectedVessel}
