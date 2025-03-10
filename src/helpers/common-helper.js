@@ -10,3 +10,19 @@ export const generateGUID = () => {
   });
 };
 
+export const tranformApiData = (data) => {
+  try {
+    if (data === null || data === undefined) return null;
+    const transformedData = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (value && typeof value === 'object' && ('$ref' in value || '$id' in value)) {
+        transformedData[key] = null;
+      } else {
+        transformedData[key] = value;
+      }
+    }
+    return transformedData;
+  } catch (error) {
+    return data;
+  }
+};

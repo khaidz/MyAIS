@@ -23,10 +23,10 @@ import hoangSa from "./data/HoangSa.json"
 import offshore from "./data/Offshore.json"
 import truongSa from "./data/TruongSa.json"
 import Select from "react-select"
-import SearchOption from "../../components/SearchOption"
+import { tranformApiData } from "../../helpers/common-helper"
 // Constants
-const INITIAL_CENTER = [107.5698, 16.4637]
-const INITIAL_ZOOM = 6
+const INITIAL_CENTER = [107.23130986896922, 20.843885704722155]
+const INITIAL_ZOOM = 8
 
 const MAP_STYLES = {
   boundary: new Style({
@@ -39,7 +39,6 @@ const MAP_STYLES = {
 }
 
 const createVesselFeature = (vessel) => {
-  console.log(vessel)
   const feature = new Feature({
     geometry: new Point(fromLonLat([vessel.Longitude, vessel.Latitude])),
     type: "vessel",
@@ -47,11 +46,10 @@ const createVesselFeature = (vessel) => {
   })
 
   const vesselType = vesselTypes.find((type) => type.type == vessel.ShipType)
-  console.log(vesselType)
   feature.setStyle(
     new Style({
       image: new Icon({
-        src: `src/assets/images/vessel/${vesselType?.name || "UnspecifiedShips"}.png`,
+        src: `src/assets/images/vessel/${vesselType?.name || "CargoVessels"}.png`,
         scale: 0.8
       })
     })
@@ -180,7 +178,7 @@ const AISMap = () => {
         .forEach((feature) => vectorSource.removeFeature(feature))
 
       vessels.forEach((vessel) => {
-        vectorSource.addFeature(createVesselFeature(vessel))
+        vectorSource.addFeature(createVesselFeature(tranformApiData(vessel)))
       })
     },
     [vectorSource]
@@ -266,7 +264,7 @@ const AISMap = () => {
     map.on("singleclick", (event) => {
       const feature = map.forEachFeatureAtPixel(event.pixel, (feat) => feat)
       if (feature?.get("type") === "vessel") {
-        setSelectedVessel(feature.get("data"))
+        setSelectedVessel(tranformApiData(feature.get("data")))
         setIsPanelOpen(true)
       }
     })
@@ -329,31 +327,52 @@ const AISMap = () => {
                       value={searchValue}
                       onChange={(e) => setSearchValue(e.target.value)}
                     />
-                    <Button color="danger" style={{ width: "150px" }} onClick={handleSearch}>
+                    <Button
+                      color="danger"
+                      style={{ width: "150px" }}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        handleSearch()
+                      }}
+                    >
                       Tìm kiếm
                     </Button>
                   </Col>
                   {showSearchResult && (
-                    <Col>
-                      <div className="text-white mt-3 d-flex align-items-center justify-content-between">
+                    <>
+                      <Col
+                        md={12}
+                        className="text-white mt-3 d-flex align-items-center justify-content-between position-sticky"
+                        style={{ top: "10px" }}
+                      >
                         <span>Kết quả tìm kiếm</span>
                         <span onClick={() => setShowSearchResult(false)} className="fs-20 cursor-pointer">
                           <i className="ri-close-circle-line"></i>
                         </span>
-                      </div>
-                      <div className="mt-2">
-                        {vesselList.map((vessel, index) => (
-                          <div className="py-2 text-white" key={index}>
-                            <span onClick={() => {
-                              setSelectedVessel(vessel);
-                              setIsPanelOpen(true);
-                            }} className="cursor-pointer">
-                              <i className="ri-radio-button-line"></i> {vessel.VesselName}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </Col>
+                      </Col>
+
+                      <Col style={{ height: "50vh", overflowY: "auto" }} className="position-relative">
+                        <div className="mt-2 position-sticky" style={{ top: "500px" }}>
+                          {vesselList.map((vessel, index) => {
+                            vessel = tranformApiData(vessel)
+                            return (
+                              <div className="py-2 text-white" key={index}>
+                                <span
+                                  onClick={() => {
+                                    setSelectedVessel(tranformApiData(vessel))
+                                    setIsPanelOpen(true)
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  <i className="ri-radio-button-line"></i> {vessel?.VesselName || vessel?.MMSI}
+                                </span>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </Col>
+                    </>
                   )}
                 </Row>
                 <div
