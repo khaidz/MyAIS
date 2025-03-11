@@ -21,8 +21,9 @@
 }
 
 .page-content {
-  padding: calc(#{$header-height} + #{$grid-gutter-width}) calc(#{$grid-gutter-width} * 0.5) $footer-height
-    calc(#{$grid-gutter-width} * 0.5);
+  padding-left: 0;
+  padding-right: 0;
+  margin-top: 75px;
 }
 
 .navbar-menu {
@@ -1031,8 +1032,9 @@
 
   @media (min-width: 1440px) {
     .page-content {
-      padding: calc(#{$header-height} + #{$grid-gutter-width} * 2) calc(#{$grid-gutter-width} * 0.5) $footer-height
-        calc(#{$grid-gutter-width} * 0.5);
+      padding-left: 0;
+      padding-right: 0;
+      margin-top: 75px;
     }
 
     .navbar-menu {

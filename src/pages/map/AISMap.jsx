@@ -12,21 +12,20 @@ import { fromLonLat } from "ol/proj"
 import OSM from "ol/source/OSM"
 import VectorSource from "ol/source/Vector"
 import { Fill, Icon, Stroke, Style } from "ol/style"
-import React, { useEffect, useRef, useState, useCallback, useMemo, memo } from "react"
-import { Button, Card, CardBody, Col, Container, Input, ListGroup, ListGroupItem, Row, Spinner } from "reactstrap"
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "react-toastify"
-import { searchTypesLOV, vesselTypes } from "../../helpers/constants"
+import { Button, Card, CardBody, Container, ListGroup, ListGroupItem, Spinner } from "reactstrap"
 import { vesselService } from "../../services/vessel-service"
 
 // Import map data
+import { tranformApiData } from "../../helpers/common-helper"
+import useAisStore from "../../store/useAisStore"
 import hoangSa from "./data/HoangSa.json"
 import offshore from "./data/Offshore.json"
 import truongSa from "./data/TruongSa.json"
-import Select from "react-select"
-import { tranformApiData } from "../../helpers/common-helper"
 // Constants
 const INITIAL_CENTER = [107.23130986896922, 20.843885704722155]
-const INITIAL_ZOOM = 8
+const INITIAL_ZOOM = 9
 
 const MAP_STYLES = {
   boundary: new Style({
@@ -39,18 +38,29 @@ const MAP_STYLES = {
 }
 
 const createVesselFeature = (vessel) => {
+  let color = vessel.ShipTypeColor || "cyan"
   const feature = new Feature({
     geometry: new Point(fromLonLat([vessel.Longitude, vessel.Latitude])),
     type: "vessel",
     data: vessel
   })
 
-  const vesselType = vesselTypes.find((type) => type.type == vessel.ShipType)
+  // Create SVG icon as data URL
+  const svgSize = 24
+  const svg = `
+    <svg width="${svgSize}" height="${svgSize}" viewBox="0 0 ${svgSize} ${svgSize}" xmlns="http://www.w3.org/2000/svg">
+      <path d="M11.437 17.608 3.354 22.828l8.336 -21.536 8.337 21.536L11.944 17.608l-0.253 -0.163 -0.254 0.163Z" stroke="#545D66" stroke-width="0.9" fill="${color.trim()}"></path>
+    </svg>
+  `
+
+  const svgUrl = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg)
+
   feature.setStyle(
     new Style({
       image: new Icon({
-        src: `src/assets/images/vessel/${vesselType?.name || "CargoVessels"}.png`,
-        scale: 0.8
+        src: svgUrl,
+        scale: 0.8,
+        imgSize: [svgSize, svgSize]
       })
     })
   )
@@ -89,7 +99,7 @@ const createPathFeatures = (points) => {
   return [lineFeature, startFeature]
 }
 
-const InfoPanel = memo(({ isPanelOpen, selectedVessel, getVesselRoute, isLoading }) => (
+const InfoPanel = memo(({ isPanelOpen, selectedVessel, getVesselRoute, isLoading, setSelectedVessel }) => (
   <div
     id="infoPanel"
     className="info-panel"
@@ -97,7 +107,16 @@ const InfoPanel = memo(({ isPanelOpen, selectedVessel, getVesselRoute, isLoading
       right: isPanelOpen ? 0 : "-24%"
     }}
   >
-    <h4>Thông tin tàu</h4>
+    <div className="">
+      <h4>Thông tin tàu</h4>
+      <span
+        className="position-absolute fs-24 cursor-pointer"
+        onClick={() => setSelectedVessel(null)}
+        style={{ top: "5px", right: "20px" }}
+      >
+        <i className="ri-close-line"></i>
+      </span>
+    </div>
     <ListGroup>
       <ListGroupItem>
         <b>Name: </b> {selectedVessel?.VesselName}
@@ -138,35 +157,16 @@ const InfoPanel = memo(({ isPanelOpen, selectedVessel, getVesselRoute, isLoading
   </div>
 ))
 
-const ControlButton = memo(({ isPanelOpen, setIsPanelOpen }) => (
-  <Button
-    className="control-button"
-    onClick={() => setIsPanelOpen(!isPanelOpen)}
-    style={{
-      right: isPanelOpen ? "calc(26% - 20px)" : "20px",
-      transform: `translateY(-50%) rotate(${isPanelOpen ? "0deg" : "180deg"})`
-    }}
-    onMouseEnter={(e) => (e.currentTarget.style.background = "#0056b3")}
-    onMouseLeave={(e) => (e.currentTarget.style.background = "#007bff")}
-  >
-    <span style={{ color: "white", fontSize: "20px", transform: "translateX(1px)" }}>➤</span>
-  </Button>
-))
-
 const AISMap = () => {
   document.title = "Bản đồ tàu thuyền"
 
   const mapRef = useRef()
   const overlayRef = useRef()
   const mapInstance = useRef()
-  const [vesselList, setVesselList] = useState([])
-  const [isPanelOpen, setIsPanelOpen] = useState(false)
-  const [selectedVessel, setSelectedVessel] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
 
-  const [searchValue, setSearchValue] = useState("")
-  const [searchType, setSearchType] = useState("VesselName")
-  const [showSearchResult, setShowSearchResult] = useState(false)
+  const selectedVessel = useAisStore((state) => state.selectedVessel)
+  const setSelectedVessel = useAisStore((state) => state.setSelectedVessel)
 
   const vectorSource = useMemo(() => new VectorSource(), [])
 
@@ -200,8 +200,7 @@ const AISMap = () => {
     async (thamSoObject = {}) => {
       try {
         const response = await vesselService.getVesselList(thamSoObject)
-        const vessels = response?.DM_Tau?.$values || []
-        setVesselList(vessels)
+        const vessels = response?.DM_Tau || []
         renderVessels(vessels)
       } catch (error) {
         console.error("Error fetching vessel list:", error)
@@ -275,23 +274,12 @@ const AISMap = () => {
     }
   }, [vectorSource])
 
-  const handleSearch = () => {
-    setShowSearchResult(true)
-    if (!searchValue || !searchType) {
-      getVesselList({})
-    } else {
-      getVesselList({
-        [searchType]: searchValue
-      })
-    }
-  }
-
   return (
     <React.Fragment>
-      <div className="page-content">
-        <Container fluid>
-          <Card>
-            <CardBody style={{ position: "relative", height: "87vh", overflow: "hidden" }}>
+      <div className="page-content pb-0">
+        <Container fluid className="ms-0 px-0">
+          <Card className="mb-0">
+            <CardBody style={{ position: "relative", height: "calc(100vh - 75px)", overflow: "hidden" }}>
               <div
                 ref={mapRef}
                 style={{
@@ -302,95 +290,14 @@ const AISMap = () => {
                   left: 0,
                   zIndex: 1
                 }}
-              >
-                <Row
-                  className="position-absolute z-1 w-50"
-                  style={{
-                    top: "10px",
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    backgroundColor: "#000a",
-                    borderRadius: "10px",
-                    padding: "10px 5px"
-                  }}
-                >
-                  <Col md={12} lg={3}>
-                    <Select
-                      options={searchTypesLOV}
-                      value={searchTypesLOV.find((type) => type.value === searchType)}
-                      onChange={(e) => setSearchType(e.value)}
-                    />
-                  </Col>
-                  <Col md={12} lg={9} className="d-flex align-items-center gap-2">
-                    <Input
-                      placeholder="Nhập từ khoá tìm kiếm"
-                      value={searchValue}
-                      onChange={(e) => setSearchValue(e.target.value)}
-                    />
-                    <Button
-                      color="danger"
-                      style={{ width: "150px" }}
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        handleSearch()
-                      }}
-                    >
-                      Tìm kiếm
-                    </Button>
-                  </Col>
-                  {showSearchResult && (
-                    <>
-                      <Col
-                        md={12}
-                        className="text-white mt-3 d-flex align-items-center justify-content-between position-sticky"
-                        style={{ top: "10px" }}
-                      >
-                        <span>Kết quả tìm kiếm</span>
-                        <span onClick={() => setShowSearchResult(false)} className="fs-20 cursor-pointer">
-                          <i className="ri-close-circle-line"></i>
-                        </span>
-                      </Col>
-
-                      <Col style={{ height: "50vh", overflowY: "auto" }} className="position-relative">
-                        <div className="mt-2 position-sticky" style={{ top: "500px" }}>
-                          {vesselList.map((vessel, index) => {
-                            vessel = tranformApiData(vessel)
-                            return (
-                              <div className="py-2 text-white" key={index}>
-                                <span
-                                  onClick={() => {
-                                    setSelectedVessel(tranformApiData(vessel))
-                                    setIsPanelOpen(true)
-                                  }}
-                                  className="cursor-pointer"
-                                >
-                                  <i className="ri-radio-button-line"></i> {vessel?.VesselName || vessel?.MMSI}
-                                </span>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </Col>
-                    </>
-                  )}
-                </Row>
-                <div
-                  className="position-absolute z-1 d-flex align-items-center gap-2 w-50"
-                  style={{
-                    left: "50%",
-                    top: 10,
-                    transform: "translateX(-50%)"
-                  }}
-                ></div>
-              </div>
+              ></div>
               <InfoPanel
-                isPanelOpen={isPanelOpen}
+                isPanelOpen={selectedVessel}
                 selectedVessel={selectedVessel}
                 getVesselRoute={getVesselRoute}
                 isLoading={isLoading}
+                setSelectedVessel={setSelectedVessel}
               />
-              <ControlButton isPanelOpen={isPanelOpen} setIsPanelOpen={setIsPanelOpen} />
             </CardBody>
           </Card>
         </Container>

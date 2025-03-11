@@ -20,12 +20,12 @@ const useLayoutStore = create((set, get) => ({
   layoutModeType: layoutModeTypes.LIGHTMODE,
   layoutWidthType: layoutWidthTypes.FLUID,
   layoutPositionType: layoutPositionTypes.FIXED,
-  topbarThemeType: topbarThemeTypes.LIGHT,
-  leftsidbarSizeType: leftsidbarSizeTypes.DEFAULT,
+  topbarThemeType: topbarThemeTypes.DARK,
+  leftsidbarSizeType: leftsidbarSizeTypes.SMALLICON,
   leftSidebarViewType: leftSidebarViewTypes.DEFAULT,
   leftSidebarImageType: leftSidebarImageTypes.NONE,
   preloader: preloaderTypes.DISABLE,
-  sidebarVisibilitytype: sidebarVisibilitytypes.SHOW,
+  sidebarVisibilitytype: sidebarVisibilitytypes.HIDDEN,
 
   changeLayout: (value) => {
     if (value === "twocolumn") {

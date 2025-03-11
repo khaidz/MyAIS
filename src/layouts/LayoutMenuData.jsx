@@ -50,30 +50,30 @@ const Navdata = () => {
         setIscurrentState("Map")
       }
     },
-    {
-      id: "users",
-      label: "Quản lý người dùng",
-      icon: "mdi mdi-account-group",
-      link: "/users",
-      stateVariables: isUsers,
-      click: function (e) {
-        e.preventDefault()
-        setIsUsers(!isUsers)
-        setIscurrentState("Users")
-      }
-    },
-    {
-      id: "map",
-      label: "Quản lý tàu thuyền",
-      icon: "mdi mdi-ferry",
-      link: "/ship",
-      stateVariables: isMap,
-      click: function (e) {
-        e.preventDefault()
-        setIsShip(!isMap)
-        setIscurrentState("Ship")
-      }
-    }
+    // {
+    //   id: "users",
+    //   label: "Quản lý người dùng",
+    //   icon: "mdi mdi-account-group",
+    //   link: "/users",
+    //   stateVariables: isUsers,
+    //   click: function (e) {
+    //     e.preventDefault()
+    //     setIsUsers(!isUsers)
+    //     setIscurrentState("Users")
+    //   }
+    // },
+    // {
+    //   id: "map",
+    //   label: "Quản lý tàu thuyền",
+    //   icon: "mdi mdi-ferry",
+    //   link: "/ship",
+    //   stateVariables: isMap,
+    //   click: function (e) {
+    //     e.preventDefault()
+    //     setIsShip(!isMap)
+    //     setIscurrentState("Ship")
+    //   }
+    // }
   ]
   return <React.Fragment>{menuItems}</React.Fragment>
 }

@@ -1,70 +1,72 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Dropdown, DropdownMenu, DropdownToggle, Form } from 'reactstrap';
+import React, { useEffect, useState } from "react"
+import { Link } from "react-router-dom"
+import { Dropdown, DropdownMenu, DropdownToggle, Form } from "reactstrap"
 
 //import images
-import logoSm from '../assets/images/logo-sm.png';
-import logoDark from '../assets/images/logo-dark.png';
-import logoLight from '../assets/images/logo-light.png';
+import logoSm from "../assets/images/logo-sm.png"
+import logoDark from "../assets/images/logo-dark.png"
+import logoLight from "../assets/images/logo-light.png"
 
 //import Components
-import SearchOption from '../components/SearchOption';
-import FullScreenDropdown from '../components/FullScreenDropdown';
-import ProfileDropdown from '../components/ProfileDropdown';
-import LightDark from '../components/LightDark';
-import useLayoutStore from '../store/useLayoutStore';
+import SearchOption from "../components/SearchOption"
+import FullScreenDropdown from "../components/FullScreenDropdown"
+import ProfileDropdown from "../components/ProfileDropdown"
+import LightDark from "../components/LightDark"
+import useLayoutStore from "../store/useLayoutStore"
+import ConfigVessel from "../components/ConfigVessel"
+import SearchVessel from "../components/SearchVessel"
 
 const Header = ({ onChangeLayoutMode, layoutModeType, headerClass }) => {
-  const sidebarVisibilitytype = useLayoutStore((state) => state.sidebarVisibilitytype);
-  const changeSidebarVisibility = useLayoutStore((state) => state.changeSidebarVisibility);
+  const sidebarVisibilitytype = useLayoutStore((state) => state.sidebarVisibilitytype)
+  const changeSidebarVisibility = useLayoutStore((state) => state.changeSidebarVisibility)
 
-  const [search, setSearch] = useState(false);
+  const [search, setSearch] = useState(false)
   const toogleSearch = () => {
-    setSearch(!search);
-  };
+    setSearch(!search)
+  }
 
   const toogleMenuBtn = () => {
-    var windowSize = document.documentElement.clientWidth;
-    changeSidebarVisibility('show');
+    var windowSize = document.documentElement.clientWidth
+    changeSidebarVisibility("show")
 
-    if (windowSize > 767) document.querySelector('.hamburger-icon').classList.toggle('open');
+    if (windowSize > 767) document.querySelector(".hamburger-icon").classList.toggle("open")
 
     //For collapse horizontal menu
-    if (document.documentElement.getAttribute('data-layout') === 'horizontal') {
-      document.body.classList.contains('menu')
-        ? document.body.classList.remove('menu')
-        : document.body.classList.add('menu');
+    if (document.documentElement.getAttribute("data-layout") === "horizontal") {
+      document.body.classList.contains("menu")
+        ? document.body.classList.remove("menu")
+        : document.body.classList.add("menu")
     }
 
     //For collapse vertical and semibox menu
     if (
-      sidebarVisibilitytype === 'show' &&
-      (document.documentElement.getAttribute('data-layout') === 'vertical' ||
-        document.documentElement.getAttribute('data-layout') === 'semibox')
+      sidebarVisibilitytype === "show" &&
+      (document.documentElement.getAttribute("data-layout") === "vertical" ||
+        document.documentElement.getAttribute("data-layout") === "semibox")
     ) {
       if (windowSize < 1025 && windowSize > 767) {
-        document.body.classList.remove('vertical-sidebar-enable');
-        document.documentElement.getAttribute('data-sidebar-size') === 'sm'
-          ? document.documentElement.setAttribute('data-sidebar-size', '')
-          : document.documentElement.setAttribute('data-sidebar-size', 'sm');
+        document.body.classList.remove("vertical-sidebar-enable")
+        document.documentElement.getAttribute("data-sidebar-size") === "sm"
+          ? document.documentElement.setAttribute("data-sidebar-size", "")
+          : document.documentElement.setAttribute("data-sidebar-size", "sm")
       } else if (windowSize > 1025) {
-        document.body.classList.remove('vertical-sidebar-enable');
-        document.documentElement.getAttribute('data-sidebar-size') === 'lg'
-          ? document.documentElement.setAttribute('data-sidebar-size', 'sm')
-          : document.documentElement.setAttribute('data-sidebar-size', 'lg');
+        document.body.classList.remove("vertical-sidebar-enable")
+        document.documentElement.getAttribute("data-sidebar-size") === "lg"
+          ? document.documentElement.setAttribute("data-sidebar-size", "sm")
+          : document.documentElement.setAttribute("data-sidebar-size", "lg")
       } else if (windowSize <= 767) {
-        document.body.classList.add('vertical-sidebar-enable');
-        document.documentElement.setAttribute('data-sidebar-size', 'lg');
+        document.body.classList.add("vertical-sidebar-enable")
+        document.documentElement.setAttribute("data-sidebar-size", "lg")
       }
     }
 
     //Two column menu
-    if (document.documentElement.getAttribute('data-layout') === 'twocolumn') {
-      document.body.classList.contains('twocolumn-panel')
-        ? document.body.classList.remove('twocolumn-panel')
-        : document.body.classList.add('twocolumn-panel');
+    if (document.documentElement.getAttribute("data-layout") === "twocolumn") {
+      document.body.classList.contains("twocolumn-panel")
+        ? document.body.classList.remove("twocolumn-panel")
+        : document.body.classList.add("twocolumn-panel")
     }
-  };
+  }
 
   return (
     <React.Fragment>
@@ -104,57 +106,20 @@ const Header = ({ onChangeLayoutMode, layoutModeType, headerClass }) => {
                   <span></span>
                 </span>
               </button>
-
+              <ConfigVessel />
+              <SearchVessel />
             </div>
 
             <div className="d-flex align-items-center">
-              <Dropdown isOpen={search} toggle={toogleSearch} className="d-md-none topbar-head-dropdown header-item">
-                <DropdownToggle
-                  type="button"
-                  tag="button"
-                  className="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle"
-                >
-                  <i className="bx bx-search fs-22"></i>
-                </DropdownToggle>
-                <DropdownMenu className="dropdown-menu-lg dropdown-menu-end p-0">
-                  <Form className="p-3">
-                    <div className="form-group m-0">
-                      <div className="input-group">
-                        <input
-                          type="text"
-                          className="form-control"
-                          placeholder="Search ..."
-                          aria-label="Recipient's username"
-                        />
-                        <button className="btn btn-primary" type="submit">
-                          <i className="mdi mdi-magnify"></i>
-                        </button>
-                      </div>
-                    </div>
-                  </Form>
-                </DropdownMenu>
-              </Dropdown>
-
-              {/* MyCartDropdwon */}
-              {/* <MyCartDropdown /> */}
-
-              {/* FullScreenDropdown */}
               <FullScreenDropdown />
-
-              {/* Dark/Light Mode set */}
               <LightDark layoutMode={layoutModeType} onChangeLayoutMode={onChangeLayoutMode} />
-
-              {/* NotificationDropdown */}
-              {/* <NotificationDropdown /> */}
-
-              {/* ProfileDropdown */}
               <ProfileDropdown />
             </div>
           </div>
         </div>
       </header>
     </React.Fragment>
-  );
-};
+  )
+}
 
-export default Header;
+export default Header

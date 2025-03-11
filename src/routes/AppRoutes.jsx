@@ -19,7 +19,7 @@ const publicRoutes = [
   { path: "/auth/forgot-password", component: <ForgotPassword /> }
 ]
 const privateRoutes = [
-  { path: "/", exact: true, component: <Home /> },
+  { path: "/", exact: true, component: <AISMap /> },
   { path: "/profile", component: <Profile /> },
   { path: "/map", component: <AISMap /> },
   { path: "/ship", component: <Ship /> },
