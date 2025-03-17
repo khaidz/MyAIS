@@ -10,7 +10,7 @@ class VesselService {
 
   getVesselRoute = async (thamSo) => {
     return await apiHelper.post("/api/Ship/Data/DoRequest", {
-      "procedureName": "Proc_HanhTrinh_Search",
+      "procedureName": "Proc_QL_HanhTrinh_Search",
       "thamSo": JSON.stringify(thamSo)
     })
   }

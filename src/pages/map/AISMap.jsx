@@ -70,7 +70,6 @@ const createVesselFeature = (vessel) => {
 
 const createPathFeatures = (points) => {
   if (!points?.length) return []
-
   const lineFeature = new Feature({
     geometry: new LineString(points.map((point) => fromLonLat([point.longitude, point.latitude]))),
     type: "path"
@@ -83,7 +82,7 @@ const createPathFeatures = (points) => {
   )
 
   const startFeature = new Feature({
-    geometry: new Point(fromLonLat([points[0].longitude, points[0].latitude])),
+    geometry: new Point(fromLonLat([points[points.length - 1].longitude, points[points.length - 1].latitude])),
     type: "path"
   })
 
@@ -99,63 +98,77 @@ const createPathFeatures = (points) => {
   return [lineFeature, startFeature]
 }
 
-const InfoPanel = memo(({ isPanelOpen, selectedVessel, getVesselRoute, isLoading, setSelectedVessel }) => (
-  <div
-    id="infoPanel"
-    className="info-panel"
-    style={{
-      right: isPanelOpen ? 0 : "-24%"
-    }}
-  >
-    <div className="">
-      <h4>Thông tin tàu</h4>
-      <span
-        className="position-absolute fs-24 cursor-pointer"
-        onClick={() => setSelectedVessel(null)}
-        style={{ top: "5px", right: "20px" }}
-      >
-        <i className="ri-close-line"></i>
-      </span>
+const InfoPanel = memo(
+  ({ isPanelOpen, selectedVessel, getVesselRoute, isLoading, setSelectedVessel, viewingRoute, setViewingRoute, renderPath }) => (
+    <div
+      id="infoPanel"
+      className="info-panel"
+      style={{
+        right: isPanelOpen ? 0 : "-24%"
+      }}
+    >
+      <div className="">
+        <h4>Thông tin tàu</h4>
+        <span
+          className="position-absolute fs-24 cursor-pointer"
+          onClick={() => setSelectedVessel(null)}
+          style={{ top: "5px", right: "20px" }}
+        >
+          <i className="ri-close-line"></i>
+        </span>
+      </div>
+      <ListGroup>
+        <ListGroupItem>
+          <b>Name: </b> {selectedVessel?.VesselName}
+        </ListGroupItem>
+        <ListGroupItem>
+          <b>MMSI: </b> {selectedVessel?.MMSI}
+        </ListGroupItem>
+        <ListGroupItem>
+          <b>IMO: </b> {selectedVessel?.IMONumber}
+        </ListGroupItem>
+        <ListGroupItem>
+          <b>Call sign: </b> {selectedVessel?.CallSign}
+        </ListGroupItem>
+        <ListGroupItem>
+          <b>Latitude/Longitude: </b> {selectedVessel?.Latitude}/ {selectedVessel?.Longitude}
+        </ListGroupItem>
+        <ListGroupItem>
+          <b>Destination: </b> {selectedVessel?.Destination}
+        </ListGroupItem>
+        <ListGroupItem>
+          <b>ShipLength: </b> {selectedVessel?.ShipLength}
+        </ListGroupItem>
+        <ListGroupItem>
+          <b>ShipWidth: </b> {selectedVessel?.ShipWidth}
+        </ListGroupItem>
+      </ListGroup>
+      <div className="text-center">
+        <Button
+          className="mt-2 d-inline-flex align-items-center justify-content-center"
+          color="primary"
+          onClick={() => getVesselRoute(selectedVessel?.MMSI)}
+          disabled={!selectedVessel?.MMSI || isLoading}
+        >
+          {isLoading && <Spinner size="sm" className="me-2" />}
+          Xem hành trình
+        </Button>
+        {viewingRoute && selectedVessel?.MMSI === viewingRoute && (
+          <Button
+            className="mt-2 d-inline-flex align-items-center justify-content-center"
+            color="primary"
+            onClick={() => {
+              setViewingRoute(null)
+              renderPath([])
+            }}
+          >
+            Ẩn hành trình
+          </Button>
+        )}
+      </div>
     </div>
-    <ListGroup>
-      <ListGroupItem>
-        <b>Name: </b> {selectedVessel?.VesselName}
-      </ListGroupItem>
-      <ListGroupItem>
-        <b>MMSI: </b> {selectedVessel?.MMSI}
-      </ListGroupItem>
-      <ListGroupItem>
-        <b>IMO: </b> {selectedVessel?.IMONumber}
-      </ListGroupItem>
-      <ListGroupItem>
-        <b>Call sign: </b> {selectedVessel?.CallSign}
-      </ListGroupItem>
-      <ListGroupItem>
-        <b>Latitude/Longitude: </b> {selectedVessel?.Latitude}/ {selectedVessel?.Longitude}
-      </ListGroupItem>
-      <ListGroupItem>
-        <b>Destination: </b> {selectedVessel?.Destination}
-      </ListGroupItem>
-      <ListGroupItem>
-        <b>ShipLength: </b> {selectedVessel?.ShipLength}
-      </ListGroupItem>
-      <ListGroupItem>
-        <b>ShipWidth: </b> {selectedVessel?.ShipWidth}
-      </ListGroupItem>
-    </ListGroup>
-    <div className="text-center">
-      <Button
-        className="mt-2 d-inline-flex align-items-center justify-content-center"
-        color="primary"
-        onClick={() => getVesselRoute(selectedVessel?.MMSI)}
-        disabled={!selectedVessel?.MMSI || isLoading}
-      >
-        {isLoading && <Spinner size="sm" className="me-2" />}
-        Xem hành trình
-      </Button>
-    </div>
-  </div>
-))
+  )
+)
 
 const AISMap = () => {
   document.title = "Bản đồ tàu thuyền"
@@ -164,6 +177,7 @@ const AISMap = () => {
   const overlayRef = useRef()
   const mapInstance = useRef()
   const [isLoading, setIsLoading] = useState(false)
+  const [viewingRoute, setViewingRoute] = useState(null)
 
   const selectedVessel = useAisStore((state) => state.selectedVessel)
   const setSelectedVessel = useAisStore((state) => state.setSelectedVessel)
@@ -215,9 +229,13 @@ const AISMap = () => {
 
     try {
       setIsLoading(true)
-      const response = await vesselService.getVesselRoute({ MMSI })
-      const route = response?.DM_HanhTrinh?.$values || []
-      renderPath(route)
+      const response = await vesselService.getVesselRoute({ MMSI: "574999125", Hours: "100" })
+      const points = (response?.DM_HanhTrinh || []).map((item) => ({
+        longitude: item.Longitude,
+        latitude: item.Latitude
+      }))
+      renderPath(points)
+      setViewingRoute(MMSI)
     } catch (error) {
       console.error("Error fetching vessel route:", error)
       toast.error("Có lỗi xảy ra khi tải hành trình tàu")
@@ -264,7 +282,6 @@ const AISMap = () => {
       const feature = map.forEachFeatureAtPixel(event.pixel, (feat) => feat)
       if (feature?.get("type") === "vessel") {
         setSelectedVessel(tranformApiData(feature.get("data")))
-        setIsPanelOpen(true)
       }
     })
 
@@ -292,11 +309,14 @@ const AISMap = () => {
                 }}
               ></div>
               <InfoPanel
+                renderPath={renderPath}
                 isPanelOpen={selectedVessel}
                 selectedVessel={selectedVessel}
                 getVesselRoute={getVesselRoute}
                 isLoading={isLoading}
                 setSelectedVessel={setSelectedVessel}
+                viewingRoute={viewingRoute}
+                setViewingRoute={setViewingRoute}
               />
             </CardBody>
           </Card>
