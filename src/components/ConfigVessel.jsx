@@ -1,36 +1,18 @@
-import React, { useState } from "react"
+import React, { Fragment, useCallback, useEffect, useState } from "react"
 import { Button, Col, Dropdown, DropdownMenu, DropdownToggle, Input, Label, Row } from "reactstrap"
 import { genSvgColorUrl } from "../helpers/common-helper"
+import useAisStore from "../store/useAisStore"
+import { vesselService } from "../services/vessel-service"
 
-const lstLoaiTau = [
-  { id: "dredger", label: "Dredger" },
-  { id: "cargo", label: "Cargo" },
-  { id: "fishing", label: "Fishing" },
-  { id: "tanker", label: "Tanker" },
-  { id: "tug", label: "Tug" },
-  { id: "passenger", label: "Passenger" },
-  { id: "towing", label: "Towing" },
-  { id: "diving", label: "Diving" },
-  { id: "military", label: "Military" },
-  { id: "wingInGround", label: "Wing in ground" },
-  { id: "highSpeedCraft", label: "High speed craft" },
-  { id: "sailing", label: "Sailing" },
-  { id: "pilot", label: "Pilot" },
-  { id: "sar", label: "Sar" },
-  { id: "tender", label: "Tender" },
-  { id: "medical", label: "Medical" },
-  { id: "other", label: "Other" },
-  { id: "na", label: "N/A" }
-]
 const ConfigVessel = () => {
   const [isConfigVesselDropdown, setIsConfigVesselDropdown] = useState(false)
   const [danhSach, setDanhSach] = useState("tatCa")
   const [thietBi, setThietBi] = useState(["classA", "classB", "aToN", "baseStation"])
-  const [loaiTau, setLoaiTau] = useState(lstLoaiTau.map((item) => item.id) || [])
-  const [trangThai, setTrangThai] = useState([])
-  const [quocTich, setQuocTich] = useState([])
-  const [dichDen, setDichDen] = useState([])
-  const [tramThu, setTramThu] = useState([])
+  const loaiTauLOV = useAisStore((state) => state.loaiTauLOV)
+  const setLoaiTauLOV = useAisStore((state) => state.setLoaiTauLOV)
+  const [loaiTau, setLoaiTau] = useState(loaiTauLOV.map((item) => item.id) || [])
+  const setVesselList = useAisStore((state) => state.setVesselList)
+  const vesselList = useAisStore((state) => state.vesselList)
 
   const toggleConfigVesselDropdown = () => {
     setIsConfigVesselDropdown(!isConfigVesselDropdown)
@@ -51,6 +33,37 @@ const ConfigVessel = () => {
         return prev.filter((item) => item !== type)
       }
       return [...prev, type]
+    })
+  }
+
+  const getLoaiTauLOV = useCallback(async () => {
+    try {
+      const response = await vesselService.getLoaiTauLOV()
+      console.log(response)
+      setLoaiTauLOV(response?.DM_Tau || [])
+    } catch (error) {
+      console.error("Error fetching vessel list:", error) 
+    }
+  }, [setLoaiTauLOV])
+
+  useEffect(() => {
+    getLoaiTauLOV()
+  }, [])
+
+  const getVesselList = useCallback(async (thamSoObject = {}) => {
+    try {
+      const response = await vesselService.getVesselList(thamSoObject)
+      const vessels = response?.DM_Tau || []
+      setVesselList(vessels)
+    } catch (error) {
+      console.error("Error fetching vessel list:", error)
+      toast.error("Có lỗi xảy ra khi tải danh sách tàu")
+    }
+  }, [])
+
+  const handleApply = () => {
+    getVesselList({
+      "ShipType": loaiTau
     })
   }
 
@@ -92,7 +105,7 @@ const ConfigVessel = () => {
           Hiển thị
           <i className="ri-arrow-down-s-line align-middle"></i>
         </DropdownToggle>
-        <DropdownMenu className="dropdown-menu-lg p-0 dropdown-menu-end" style={{ width: "900px" }}>
+        <DropdownMenu className="dropdown-menu-lg p-0 dropdown-menu-end" style={{ width: "900px"}}>
           <div className="p-3 border-top-0 border-start-0 border-end-0 border bg-primary text-white">
             <Row className="align-items-center">
               <Col>
@@ -191,38 +204,25 @@ const ConfigVessel = () => {
                       </div>
                       <div
                         className="cursor-pointer text-decoration-underline"
-                        onClick={() => setLoaiTau(lstLoaiTau.map((item) => item.id))}
+                        onClick={() => setLoaiTau(loaiTauLOV.map((item) => item.id))}
                       >
                         Chọn tất cả
                       </div>
                     </div>
                   </>
                 )}
-                <Row className="mb-3">
-                  {renderLoaiTauCheckbox("dredger", "Dredger", "#a417fc")}
-                  {renderLoaiTauCheckbox("cargo", "Cargo", "#029cdd")}
-                  {renderLoaiTauCheckbox("fishing", "Fishing", "#fda101")}
-                  {renderLoaiTauCheckbox("tanker", "Tanker", "#f12433")}
-                  {renderLoaiTauCheckbox("tug", "Tug", "#177b54")}
-                  {renderLoaiTauCheckbox("passenger", "Passenger", "#160d86")}
-                  {renderLoaiTauCheckbox("towing", "Towing", "#c8f92e")}
-                  {renderLoaiTauCheckbox("diving", "Diving", "#75f4f9")}
-                  {renderLoaiTauCheckbox("military", "Military", "#85144b")}
-                  {renderLoaiTauCheckbox("wingInGround", "Wing in ground", "#95b871")}
-                  {renderLoaiTauCheckbox("highSpeedCraft", "High speed craft", "#f1fa3e")}
-                  {renderLoaiTauCheckbox("sailing", "Sailing", "#e1ebb7")}
-                  {renderLoaiTauCheckbox("pilot", "Pilot", "#090708")}
-                  {renderLoaiTauCheckbox("sar", "Sar", "#7765fd")}
-                  {renderLoaiTauCheckbox("tender", "Tender", "#eea290")}
-                  {renderLoaiTauCheckbox("medical", "Medical", "#36fcf5")}
-                  {renderLoaiTauCheckbox("other", "Other", "#27f92e")}
-                  {renderLoaiTauCheckbox("na", "N/A", "#a5aaac")}
+                <Row className="mb-3" style={{ maxHeight: "500px", overflowY: "auto" }}>
+                {(loaiTauLOV || []).map((item, index) => {
+                  return <Fragment key={index}>
+                  {renderLoaiTauCheckbox(item.id, item.valuess, item.color)}
+                  </Fragment>
+                })}
                 </Row>
               </Col>
             </Row>
             <Row className="mb-3">
               <Col md={12} className="d-flex justify-content-center">
-                <Button color="info">Áp dụng</Button>
+                <Button color="info" onClick={() => { handleApply(); setIsConfigVesselDropdown(false); }}>Áp dụng</Button>
               </Col>
             </Row>
           </div>

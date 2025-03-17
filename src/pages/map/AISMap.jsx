@@ -9,7 +9,7 @@ import TileLayer from "ol/layer/Tile"
 import VectorLayer from "ol/layer/Vector"
 import "ol/ol.css"
 import { fromLonLat } from "ol/proj"
-import OSM from "ol/source/OSM"
+import { XYZ } from "ol/source"
 import VectorSource from "ol/source/Vector"
 import { Fill, Icon, Stroke, Style } from "ol/style"
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
@@ -23,6 +23,8 @@ import useAisStore from "../../store/useAisStore"
 import hoangSa from "./data/HoangSa.json"
 import offshore from "./data/Offshore.json"
 import truongSa from "./data/TruongSa.json"
+import Select from "react-select"
+
 // Constants
 const INITIAL_CENTER = [107.23130986896922, 20.843885704722155]
 const INITIAL_ZOOM = 9
@@ -60,7 +62,8 @@ const createVesselFeature = (vessel) => {
       image: new Icon({
         src: svgUrl,
         scale: 0.8,
-        imgSize: [svgSize, svgSize]
+        imgSize: [svgSize, svgSize],
+        rotation: vessel.CourseOverGround || 0
       })
     })
   )
@@ -89,8 +92,8 @@ const createPathFeatures = (points) => {
   startFeature.setStyle(
     new Style({
       image: new Icon({
-        src: `src/assets/images/vessel/star.png`,
-        scale: 0.1
+        src: `src/assets/images/vessel/ship.png`,
+        scale: 0.2
       })
     })
   )
@@ -99,7 +102,18 @@ const createPathFeatures = (points) => {
 }
 
 const InfoPanel = memo(
-  ({ isPanelOpen, selectedVessel, getVesselRoute, isLoading, setSelectedVessel, viewingRoute, setViewingRoute, renderPath }) => (
+  ({
+    isPanelOpen,
+    selectedVessel,
+    getVesselRoute,
+    isLoading,
+    setSelectedVessel,
+    viewingRoute,
+    setViewingRoute,
+    renderPath,
+    selectedTime,
+    setSelectedTime
+  }) => (
     <div
       id="infoPanel"
       className="info-panel"
@@ -143,9 +157,24 @@ const InfoPanel = memo(
           <b>ShipWidth: </b> {selectedVessel?.ShipWidth}
         </ListGroupItem>
       </ListGroup>
-      <div className="text-center">
+      <div className="text-center d-flex flex-row gap-2 align-items-center mt-3">
+        <Select
+          options={[
+            { value: "1", label: "1H" },
+            { value: "3", label: "3H" },
+            { value: "6", label: "6H" },
+            { value: "12", label: "12H" },
+            { value: "24", label: "24H" },
+            { value: "48", label: "48H" },
+            { value: "72", label: "72H" },
+          ]}
+          value={selectedTime}
+          onChange={(e) => {
+            setSelectedTime(e)
+          }}
+        />
         <Button
-          className="mt-2 d-inline-flex align-items-center justify-content-center"
+          className="d-inline-flex align-items-center justify-content-center"
           color="primary"
           onClick={() => getVesselRoute(selectedVessel?.MMSI)}
           disabled={!selectedVessel?.MMSI || isLoading}
@@ -154,18 +183,12 @@ const InfoPanel = memo(
           Xem hành trình
         </Button>
         {viewingRoute && selectedVessel?.MMSI === viewingRoute && (
-          <Button
-            className="mt-2 d-inline-flex align-items-center justify-content-center"
-            color="primary"
-            onClick={() => {
-              setViewingRoute(null)
-              renderPath([])
-            }}
-          >
+          <Button color="primary" onClick={() => setViewingRoute(null)} className="flex-grow-1">
             Ẩn hành trình
           </Button>
-        )}
+      )}
       </div>
+      
     </div>
   )
 )
@@ -178,12 +201,12 @@ const AISMap = () => {
   const mapInstance = useRef()
   const [isLoading, setIsLoading] = useState(false)
   const [viewingRoute, setViewingRoute] = useState(null)
-
   const selectedVessel = useAisStore((state) => state.selectedVessel)
   const setSelectedVessel = useAisStore((state) => state.setSelectedVessel)
-
+  const vesselList = useAisStore((state) => state.vesselList)
+  const setVesselList = useAisStore((state) => state.setVesselList)
   const vectorSource = useMemo(() => new VectorSource(), [])
-
+  const [selectedTime, setSelectedTime] = useState({ value: "1", label: "1H" })
   const renderVessels = useCallback(
     (vessels) => {
       vectorSource
@@ -215,6 +238,7 @@ const AISMap = () => {
       try {
         const response = await vesselService.getVesselList(thamSoObject)
         const vessels = response?.DM_Tau || []
+        setVesselList(vessels)
         renderVessels(vessels)
       } catch (error) {
         console.error("Error fetching vessel list:", error)
@@ -224,18 +248,34 @@ const AISMap = () => {
     [renderVessels]
   )
 
+  useEffect(() => {
+    renderVessels(vesselList)
+  }, [vesselList])
+
   const getVesselRoute = async (MMSI) => {
     if (!MMSI) return
 
     try {
       setIsLoading(true)
-      const response = await vesselService.getVesselRoute({ MMSI: "574999125", Hours: "100" })
+      const response = await vesselService.getVesselRoute({ MMSI: "574999125", Hours: selectedTime?.value || 72 })
       const points = (response?.DM_HanhTrinh || []).map((item) => ({
         longitude: item.Longitude,
         latitude: item.Latitude
       }))
       renderPath(points)
       setViewingRoute(MMSI)
+
+      // Zoom lại điểm bắt đầu với hiệu ứng
+      if (points.length > 0) {
+        const startPoint = fromLonLat([points[0].longitude, points[0].latitude]);
+        const view = mapInstance.current.getView();
+        view.setCenter(startPoint);
+        // Thêm hiệu ứng zoom
+        view.animate({
+          zoom: 11,
+          duration: 1500 // Thời gian hiệu ứng zoom
+        });
+      }
     } catch (error) {
       console.error("Error fetching vessel route:", error)
       toast.error("Có lỗi xảy ra khi tải hành trình tàu")
@@ -249,7 +289,16 @@ const AISMap = () => {
 
     const map = new Map({
       target: mapRef.current,
-      layers: [new TileLayer({ source: new OSM() }), new VectorLayer({ source: vectorSource })],
+      layers: [
+        new TileLayer({
+          source: new XYZ({
+            url: "http://mt0.google.com/vt/lyrs=p&hl=vi&x={x}&y={y}&z={z}"
+          }),
+          visible: true,
+          title: "ggterrain"
+        }),
+        new VectorLayer({ source: vectorSource })
+      ],
       view: new View({
         center: fromLonLat(INITIAL_CENTER),
         zoom: INITIAL_ZOOM
@@ -317,6 +366,8 @@ const AISMap = () => {
                 setSelectedVessel={setSelectedVessel}
                 viewingRoute={viewingRoute}
                 setViewingRoute={setViewingRoute}
+                selectedTime={selectedTime}
+                setSelectedTime={setSelectedTime}
               />
             </CardBody>
           </Card>
