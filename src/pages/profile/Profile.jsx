@@ -46,7 +46,7 @@ const Profile = () => {
 
   return (
     <React.Fragment>
-      <div className="page-content">
+      <div className="page-content" style={{marginTop: '100px'}}>
         <Container fluid>
           <BreadCrumb title="Thông tin cá nhân" pageTitle="Trang chủ" />
           <Row>

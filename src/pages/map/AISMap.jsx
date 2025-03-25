@@ -257,7 +257,7 @@ const AISMap = () => {
 
     try {
       setIsLoading(true)
-      const response = await vesselService.getVesselRoute({ MMSI: "574999125", Hours: selectedTime?.value || 72 })
+      const response = await vesselService.getVesselRoute({ MMSI: MMSI, Hours: selectedTime?.value || 72 })
       const points = (response?.DM_HanhTrinh || []).map((item) => ({
         longitude: item.Longitude,
         latitude: item.Latitude

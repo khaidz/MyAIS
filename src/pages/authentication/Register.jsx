@@ -23,10 +23,10 @@ const schema = yup
       .string()
       .required("Mật khẩu là bắt buộc")
       .matches("^(?:.{6,30}|)$", "Mật khẩu có độ dài từ 6-30 ký tự"),
-    email: yup
-      .string()
-      .required("Email là bắt buộc")
-      .matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", "Email không hợp lệ")
+    // email: yup
+    //   .string()
+    //   .required("Email là bắt buộc")
+    //   .matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", "Email không hợp lệ")
   })
   .required()
 
@@ -58,7 +58,7 @@ const Register = (props) => {
   const onSubmit = async (data) => {
     setIsLoading(true)
     try {
-      let res = await apiHelper.post("/api/auth/register", data)
+      let res = await apiHelper.post("/api/Authen/signin", data)
       toast.success("Đăng ký tài khoản thành công")
       navigate("/auth/login")
     } catch (err) {
@@ -150,7 +150,7 @@ const Register = (props) => {
                             <div className="invalid-feedback  d-inline-block">{errors.password.message}</div>
                           )}
                         </div>
-                        <div className="mb-3">
+                        {/* <div className="mb-3">
                           <Label htmlFor="email-field" className="form-label">
                             Địa chỉ email
                           </Label>
@@ -170,7 +170,7 @@ const Register = (props) => {
                             )}
                           />
                           {errors.email && <div className="invalid-feedback">{errors.email.message}</div>}
-                        </div>
+                        </div> */}
 
                         <div className="mt-4">
                           <Button

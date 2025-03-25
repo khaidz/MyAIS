@@ -67,33 +67,32 @@ export const AuthProvider = ({ children }) => {
   const location = useLocation()
 
   useEffect(() => {
-    dispatch(init({ isAuthenticated: true, user: {username: 'Admin'} }))
-    // const checkTokens = async () => {
-    //   setIsLoading(true)
-    //   const accessToken = getToken()
-    //   const refreshToken = getRefreshToken()
-    //   try {
-    //     if (isTokenValid(accessToken) || isTokenValid(refreshToken)) {
-    //       const userResponse = await userService.getUserInfo()
-    //       dispatch(init({ isAuthenticated: true, user: userResponse.data }))
-    //     } else {
-    //       dispatch(logout())
-    //       if (location.pathname.indexOf("auth") === 0) {
-    //         navigate("/auth/login")
-    //       }
-    //     }
-    //   } catch (error) {
-    //     console.error("Error during token check:", error)
-    //     toast.error("An error occurred. Please try again later")
-    //     dispatch(init({ isInitialized: true }))
-    //     deleteAccessToken()
-    //     navigate("/auth/login")
-    //   } finally {
-    //     setIsLoading(false)
-    //   }
-    // }
+    const checkTokens = async () => {
+      setIsLoading(true)
+      const accessToken = getToken()
+      const refreshToken = getRefreshToken()
+      try {
+        if (isTokenValid(accessToken) || isTokenValid(refreshToken)) {
+          const userResponse = await userService.getUserInfo()
+          dispatch(init({ isAuthenticated: true, user: userResponse }))
+        } else {
+          dispatch(logout())
+          if (location.pathname.indexOf("auth") === 0) {
+            navigate("/auth/login")
+          }
+        }
+      } catch (error) {
+        console.error("Error during token check:", error)
+        toast.error("An error occurred. Please try again later")
+        dispatch(init({ isInitialized: true }))
+        deleteAccessToken()
+        navigate("/auth/login")
+      } finally {
+        setIsLoading(false)
+      }
+    }
 
-    // checkTokens()
+    checkTokens()
   }, [dispatch])
 
   if (isLoading) {

@@ -24,7 +24,6 @@ const ProfileDropdown = () => {
 
   const handleLogout = async() => {
     try {
-      // await userService.logout()
       dispatch(logout())
       toast.success("Đã đăng xuất")
     } catch (err) {

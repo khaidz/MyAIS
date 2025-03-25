@@ -59,11 +59,12 @@ const Login = () => {
     setIsLoading(true)
     try {
       const response = await userService.login(data.username, data.password)
-      setAccessToken(response.data.token)
-      setRefreshToken(response.data.refreshToken)
+
+      setAccessToken(response.accessToken)
+      setRefreshToken(response.refreshToken)
 
       const userResponse = await userService.getUserInfo()
-      dispatch(init({ isAuthenticated: true, user: userResponse.data }))
+      dispatch(init({ isAuthenticated: true, user: userResponse }))
 
       // xử lý đưa về trang trước đó
       let from = "/"
