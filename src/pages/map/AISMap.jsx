@@ -334,11 +334,17 @@ const AISMap = () => {
       }
     })
 
+    // Set up interval to refresh vessel list every 20 seconds
+    const intervalId = setInterval(() => {
+      getVesselList()
+    }, 20000)
+
     return () => {
       map.setTarget(undefined)
       overlayRef.current?.setPosition(undefined)
+      clearInterval(intervalId) // Clean up interval when component unmounts
     }
-  }, [vectorSource])
+  }, [vectorSource, getVesselList])
 
   return (
     <React.Fragment>

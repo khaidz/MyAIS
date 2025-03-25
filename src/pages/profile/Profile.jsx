@@ -37,7 +37,7 @@ const Profile = () => {
   const getProfile = async () => {
     try {
       const res = await userService.getUserInfo()
-      dispatch(init({ isAuthenticated: true, user: res.data }))
+      dispatch(init({ isAuthenticated: true, user: res }))
     } catch (err) {
       console.log("error: ", error)
       toast.error(err.message)
