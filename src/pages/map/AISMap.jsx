@@ -26,8 +26,8 @@ import truongSa from "./data/TruongSa.json"
 import Select from "react-select"
 
 // Constants
-const INITIAL_CENTER = [107.23130986896922, 20.843885704722155]
-const INITIAL_ZOOM = 9
+const INITIAL_CENTER = [106.81196689833655, 20.728998788877234]
+const INITIAL_ZOOM = 11
 
 const MAP_STYLES = {
   boundary: new Style({
@@ -47,26 +47,30 @@ const createVesselFeature = (vessel) => {
     data: vessel
   })
 
-  // Create SVG icon as data URL
-  const svgSize = 24
-  const svg = `
+  const svgSize = vessel.AidTypeID ? 12 : 24;
+  const svg = vessel.AidTypeID ? `
+    <svg width="${svgSize}" height="${svgSize}" viewBox="0 0 ${svgSize} ${svgSize}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${svgSize}" height="${svgSize}" stroke="red" fill="#f3e3e3" stroke-width="2"/>
+      <circle cx="${svgSize / 2}" cy="${svgSize / 2}" r="2" fill="red" stroke="red" stroke-width="1"/>
+    </svg>
+  ` : `
     <svg width="${svgSize}" height="${svgSize}" viewBox="0 0 ${svgSize} ${svgSize}" xmlns="http://www.w3.org/2000/svg">
       <path d="M11.437 17.608 3.354 22.828l8.336 -21.536 8.337 21.536L11.944 17.608l-0.253 -0.163 -0.254 0.163Z" stroke="#545D66" stroke-width="0.9" fill="${color.trim()}"></path>
     </svg>
-  `
-
-  const svgUrl = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg)
-
+  `;
+  const svgUrl = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
   feature.setStyle(
     new Style({
       image: new Icon({
         src: svgUrl,
+
+        
         scale: 0.8,
         imgSize: [svgSize, svgSize],
-        rotation: vessel.CourseOverGround || 0
+        rotation: vessel.AidTypeID ? 45 : (vessel.CourseOverGround || 0)
       })
     })
-  )
+  );
 
   return feature
 }
@@ -166,7 +170,7 @@ const InfoPanel = memo(
             { value: "12", label: "12H" },
             { value: "24", label: "24H" },
             { value: "48", label: "48H" },
-            { value: "72", label: "72H" },
+            { value: "72", label: "72H" }
           ]}
           value={selectedTime}
           onChange={(e) => {
@@ -186,9 +190,8 @@ const InfoPanel = memo(
           <Button color="primary" onClick={() => setViewingRoute(null)} className="flex-grow-1">
             Ẩn hành trình
           </Button>
-      )}
+        )}
       </div>
-      
     </div>
   )
 )
@@ -267,14 +270,14 @@ const AISMap = () => {
 
       // Zoom lại điểm bắt đầu với hiệu ứng
       if (points.length > 0) {
-        const startPoint = fromLonLat([points[0].longitude, points[0].latitude]);
-        const view = mapInstance.current.getView();
-        view.setCenter(startPoint);
+        const startPoint = fromLonLat([points[0].longitude, points[0].latitude])
+        const view = mapInstance.current.getView()
+        view.setCenter(startPoint)
         // Thêm hiệu ứng zoom
         view.animate({
           zoom: 11,
           duration: 1500 // Thời gian hiệu ứng zoom
-        });
+        })
       }
     } catch (error) {
       console.error("Error fetching vessel route:", error)
