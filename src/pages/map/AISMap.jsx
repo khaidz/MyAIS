@@ -47,30 +47,31 @@ const createVesselFeature = (vessel) => {
     data: vessel
   })
 
-  const svgSize = vessel.AidTypeID ? 12 : 24;
-  const svg = vessel.AidTypeID ? `
+  const svgSize = vessel.AidTypeID ? 12 : 24
+  const svg = vessel.AidTypeID
+    ? `
     <svg width="${svgSize}" height="${svgSize}" viewBox="0 0 ${svgSize} ${svgSize}" xmlns="http://www.w3.org/2000/svg">
       <rect width="${svgSize}" height="${svgSize}" stroke="red" fill="#f3e3e3" stroke-width="2"/>
       <circle cx="${svgSize / 2}" cy="${svgSize / 2}" r="2" fill="red" stroke="red" stroke-width="1"/>
     </svg>
-  ` : `
+  `
+    : `
     <svg width="${svgSize}" height="${svgSize}" viewBox="0 0 ${svgSize} ${svgSize}" xmlns="http://www.w3.org/2000/svg">
       <path d="M11.437 17.608 3.354 22.828l8.336 -21.536 8.337 21.536L11.944 17.608l-0.253 -0.163 -0.254 0.163Z" stroke="#545D66" stroke-width="0.9" fill="${color.trim()}"></path>
     </svg>
-  `;
-  const svgUrl = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  `
+  const svgUrl = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg)
   feature.setStyle(
     new Style({
       image: new Icon({
         src: svgUrl,
 
-        
         scale: 0.8,
         imgSize: [svgSize, svgSize],
-        rotation: vessel.AidTypeID ? 45 : (vessel.CourseOverGround || 0)
+        rotation: vessel.AidTypeID ? 45 : vessel.CourseOverGround || 0
       })
     })
-  );
+  )
 
   return feature
 }
@@ -135,63 +136,89 @@ const InfoPanel = memo(
           <i className="ri-close-line"></i>
         </span>
       </div>
-      <ListGroup>
-        <ListGroupItem>
-          <b>Name: </b> {selectedVessel?.VesselName}
-        </ListGroupItem>
-        <ListGroupItem>
-          <b>MMSI: </b> {selectedVessel?.MMSI}
-        </ListGroupItem>
-        <ListGroupItem>
-          <b>IMO: </b> {selectedVessel?.IMONumber}
-        </ListGroupItem>
-        <ListGroupItem>
-          <b>Call sign: </b> {selectedVessel?.CallSign}
-        </ListGroupItem>
-        <ListGroupItem>
-          <b>Latitude/Longitude: </b> {selectedVessel?.Latitude}/ {selectedVessel?.Longitude}
-        </ListGroupItem>
-        <ListGroupItem>
-          <b>Destination: </b> {selectedVessel?.Destination}
-        </ListGroupItem>
-        <ListGroupItem>
-          <b>ShipLength: </b> {selectedVessel?.ShipLength}
-        </ListGroupItem>
-        <ListGroupItem>
-          <b>ShipWidth: </b> {selectedVessel?.ShipWidth}
-        </ListGroupItem>
-      </ListGroup>
-      <div className="text-center d-flex flex-row gap-2 align-items-center mt-3">
-        <Select
-          options={[
-            { value: "1", label: "1H" },
-            { value: "3", label: "3H" },
-            { value: "6", label: "6H" },
-            { value: "12", label: "12H" },
-            { value: "24", label: "24H" },
-            { value: "48", label: "48H" },
-            { value: "72", label: "72H" }
-          ]}
-          value={selectedTime}
-          onChange={(e) => {
-            setSelectedTime(e)
-          }}
-        />
-        <Button
-          className="d-inline-flex align-items-center justify-content-center"
-          color="primary"
-          onClick={() => getVesselRoute(selectedVessel?.MMSI)}
-          disabled={!selectedVessel?.MMSI || isLoading}
-        >
-          {isLoading && <Spinner size="sm" className="me-2" />}
-          Xem hành trình
-        </Button>
-        {viewingRoute && selectedVessel?.MMSI === viewingRoute && (
-          <Button color="primary" onClick={() => setViewingRoute(null)} className="flex-grow-1">
-            Ẩn hành trình
-          </Button>
-        )}
-      </div>
+
+      {!selectedVessel?.AidTypeID && (
+        <>
+          <ListGroup>
+            <ListGroupItem>
+              <b>Name: </b> {selectedVessel?.VesselName ?? "N/A"}
+            </ListGroupItem>
+            <ListGroupItem>
+              <b>MMSI: </b> {selectedVessel?.MMSI ?? "N/A"}
+            </ListGroupItem>
+            <ListGroupItem>
+              <b>IMO: </b> {selectedVessel?.IMONumber ?? "N/A"}
+            </ListGroupItem>
+            <ListGroupItem>
+              <b>Call sign: </b> {selectedVessel?.CallSign ?? "N/A"}
+            </ListGroupItem>
+            <ListGroupItem>
+              <b>Latitude/Longitude: </b> {selectedVessel?.Latitude ?? "N/A"}/ {selectedVessel?.Longitude ?? "N/A"}
+            </ListGroupItem>
+            <ListGroupItem>
+              <b>Destination: </b> {selectedVessel?.Destination ?? "N/A"}
+            </ListGroupItem>
+            <ListGroupItem>
+              <b>ShipLength: </b> {selectedVessel?.ShipLength ?? "N/A"}
+            </ListGroupItem>
+            <ListGroupItem>
+              <b>ShipWidth: </b> {selectedVessel?.ShipWidth ?? "N/A"}
+            </ListGroupItem>
+          </ListGroup>
+          <div className="text-center d-flex flex-row gap-2 align-items-center mt-3">
+            <Select
+              options={[
+                { value: "1", label: "1H" },
+                { value: "3", label: "3H" },
+                { value: "6", label: "6H" },
+                { value: "12", label: "12H" },
+                { value: "24", label: "24H" },
+                { value: "48", label: "48H" },
+                { value: "72", label: "72H" }
+              ]}
+              value={selectedTime}
+              onChange={(e) => {
+                setSelectedTime(e)
+              }}
+            />
+            <Button
+              className="d-inline-flex align-items-center justify-content-center"
+              color="primary"
+              onClick={() => getVesselRoute(selectedVessel?.MMSI)}
+              disabled={!selectedVessel?.MMSI || isLoading}
+            >
+              {isLoading && <Spinner size="sm" className="me-2" />}
+              Xem hành trình
+            </Button>
+            {viewingRoute && selectedVessel?.MMSI === viewingRoute && (
+              <Button color="primary" onClick={() => setViewingRoute(null)} className="flex-grow-1">
+                Ẩn hành trình
+              </Button>
+            )}
+          </div>
+        </>
+      )}
+      {!!selectedVessel?.AidTypeID && (
+        <>
+          <ListGroup>
+            <ListGroupItem>
+              <b>MMSI: </b> {selectedVessel?.MMSI ?? "N/A"}
+            </ListGroupItem>
+            <ListGroupItem>
+              <b>Type Of Aid To Navigation: </b> {selectedVessel?.AidType ?? "N/A"}
+            </ListGroupItem>
+            <ListGroupItem>
+              <b>Dimension: </b> {selectedVessel?.ShipLength ?? "N/A"}/{selectedVessel?.ShipWidth ?? "N/A"}
+            </ListGroupItem>
+            <ListGroupItem>
+              <b>Position: </b> {selectedVessel?.Longitude ?? "N/A"}/{selectedVessel?.Latitude ?? "N/A"}
+            </ListGroupItem>
+            <ListGroupItem>
+              <b>Time Of Position: </b> {selectedVessel?.DateTimeUTC ?? "N/A"}
+            </ListGroupItem>
+          </ListGroup>
+        </>
+      )}
     </div>
   )
 )
